@@ -1,7 +1,17 @@
 # RotaSenso
 RotaSenso: Feel the presence of someone afar. A connected rotary device that mirrors emotions and gestures in real-time. 🔄💙
+The RotaSenso is also on [Hackster](https://www.hackster.io/vongomben/how-to-build-a-rotasenso-aka-connecting-with-your-sos-5eb97d)!
 
 ![](https://github.com/vongomben/RotaSenso/blob/main/gif/full.gif)
+
+## Part list
+
+The cost of this project is approximately 40 USD without shipping and fees, but you can heavily limit the cost by solder directly servo and potentiometer to your xiao (or go-to ESP32 board), based on your soldering skills. As you can see from the description this project is aimed to a nwcomer in the IoT world. 
+
+1) [Seeed Studio XIAO ESP32S3](https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html) (USD 7.49) ×	2	
+2) [Grove Shield for Seeeduino XIAO](https://www.seeedstudio.com/Grove-Shield-for-Seeeduino-XIAO-p-4621.html) (USD 3.90) × 2	
+3) [Seeed Studio Grove Servo](https://www.seeedstudio.com/Grove-Servo.html) (5.90) ×	2	
+4) [Seeed Studio Rotary Angle Sensor](https://www.seeedstudio.com/Grove-Rotary-Angle-Sensor.html) (USD 3.20) ×	2	
 
 
 ## Story
