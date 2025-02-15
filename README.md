@@ -1,7 +1,8 @@
 # RotaSenso
 RotaSenso: Feel the presence of someone afar. A connected rotary device that mirrors emotions and gestures in real-time. 🔄💙
 
-![image](https://github.com/user-attachments/assets/8d3d589b-d84a-4484-9278-24643ee04c9f)
+![](https://github.com/vongomben/RotaSenso/blob/main/gif/full.gif)
+
 
 ## Story
 This project is a very humble tribute to a mania, a trend I've seen in the Iot-verse since its beginning.
@@ -55,7 +56,8 @@ The hardware is very simple and doesn't need soldering. The Servo will be hooked
 
 You will have to create two similar boards or little "things" to put the RotaSenso in. Feel free to amaze us. Once you are done you will need to calibrate the two RotaSensos in order to know where are the 8 numbers
 
-embed calibrate
+![](https://github.com/vongomben/RotaSenso/blob/main/gif/calibra-01.gif)
+
 
 Calibration.ino is the code for calibrate the devices, while Rotasenso-v01.ino is the firmware for both devices. 
 Please remember to:
@@ -65,4 +67,5 @@ Please remember to:
 * the First will publish to `test/SV02` (line 113) and receive on `test/SV01` (line 51). The second RotaSenso will need to have these two variables in the opposite positions (be carefule about this!
 * Increase the number of time the message is sent! On lin 110 I sent the data 3 times. You can increase this numeber in order to be mor sure the data was sent correctly. Possibly in the future we should sort out a way to have the two devices handshake.
 
-embed calibrate 2
+![](https://github.com/vongomben/RotaSenso/blob/main/gif/calibrate-02.gif)
+
