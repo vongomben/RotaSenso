@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Flash & Config</title>
+    <script type="module" src="https://unpkg.com/esp-web-tools@9.1.2/dist/web/install-button.js"></script>
+</head>
+<body>
+    <h2>Flash e Configura il tuo ESP32</h2>
+    
+    <p>Premi il pulsante qui sotto per flashare il firmware sul tuo ESP32:</p>
+    <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
+
+    <h3>Configura ESP32</h3>
+    <button id="connect">Connetti a ESP32</button>
+    <br><br>
+    <input type="text" id="ssid" placeholder="SSID">
+    <input type="text" id="password" placeholder="Password">
+    <input type="text" id="broker" placeholder="MQTT Broker">
+    <input type="text" id="send_channel" placeholder="Canale Invio">
+    <input type="text" id="receive_channel" placeholder="Canale Ricezione">
+    <button id="send">Invia Dati</button>
+
+    <script>
+        let port;
+        
+        document.getElementById("connect").addEventListener("click", async () => {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                console.log("Connesso!");
+            } catch (error) {
+                console.error("Errore di connessione", error);
+            }
+        });
+
+        document.getElementById("send").addEventListener("click", async () => {
+            if (!port) {
+                alert("Connetti prima il dispositivo!");
+                return;
+            }
+
+            let ssid = document.getElementById("ssid").value;
+            let password = document.getElementById("password").value;
+            let broker = document.getElementById("broker").value;
+            let send_channel = document.getElementById("send_channel").value;
+            let receive_channel = document.getElementById("receive_channel").value;
+
+            let message = `${ssid} ${password} ${broker} ${send_channel} ${receive_channel}\n`;
+
+            const encoder = new TextEncoder();
+            const writer = port.writable.getWriter();
+            await writer.write(encoder.encode(message));
+            writer.releaseLock();
+
+            console.log("Dati inviati:", message);
+        });
+    </script>
+</body>
+</html>
