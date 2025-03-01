@@ -32,7 +32,6 @@ void connectToWiFi();
 void connectToMQTT();
 void sendMQTTMessage(String msg);
 void reconnectMQTT();
-void clearConfig();
 void callback(char* topic, byte* payload, unsigned int length);
 
 void setup() {
@@ -40,7 +39,7 @@ void setup() {
     servo1.attach(servoPin);
 
     if (!SPIFFS.begin(true)) {
-        Serial.println("[ERROR] SPIFFS initialization failed!");
+        Serial.println("SPIFFS initialization failed!");
         return;
     }
 
@@ -56,24 +55,9 @@ void setup() {
 
     // Connect to MQTT
     connectToMQTT();
-
-    // Inform the user that the device is ready
-    Serial.println("[Device Ready: Turn the knob to send data]");
 }
 
 void loop() {
-    // Check for Serial input to clear config
-    if (Serial.available()) {
-        String input = Serial.readStringUntil('\n');
-        input.trim();
-        if (input.equalsIgnoreCase("CLEAR")) {
-            clearConfig();
-            Serial.println("[Configuration cleared. Restarting ESP...]");
-            delay(2000);
-            ESP.restart(); // Restart ESP32 to apply changes
-        }
-    }
-
     int servoPosition = map(analogRead(potentiometerPin), 0, 4096, 0, 180);
     servo1.write(servoPosition);
 
@@ -90,9 +74,10 @@ void loop() {
 
     // Send MQTT only if the value is stable
     if (stableCount == stabilityThreshold) {
-        Serial.print("[Mapped Value: ");
-        Serial.print(mappedValue);
-        Serial.println("] Sent via MQTT!");
+        Serial.print("Servo Position: ");
+        Serial.print(servoPosition);
+        Serial.print(" -> Mapped Value: ");
+        Serial.println(mappedValue);
 
         // Send data via MQTT
         if (client.connected()) {
@@ -104,7 +89,7 @@ void loop() {
 
     // Maintain WiFi & MQTT connection
     if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("[WiFi Lost! Reconnecting...]");
+        Serial.println("WiFi lost! Reconnecting...");
         connectToWiFi();
     }
     
@@ -120,7 +105,7 @@ void loop() {
 void loadConfig() {
     File file = SPIFFS.open("/config.txt");
     if (!file) {
-        Serial.println("[No configuration file found.]");
+        Serial.println("No configuration file found.");
         return;
     }
     
@@ -137,12 +122,16 @@ void loadConfig() {
     mqtt_send_channel.trim();
     mqtt_receive_channel.trim();
 
-    Serial.println("[Configuration Loaded]");
+    Serial.println("Loaded Configuration:");
+    Serial.println("SSID: " + ssid);
+    Serial.println("Broker: " + mqtt_broker);
+    Serial.println("Send Channel: " + mqtt_send_channel);
+    Serial.println("Receive Channel: " + mqtt_receive_channel);
 }
 
 // Function to connect to WiFi
 void connectToWiFi() {
-    Serial.println("[Connecting to WiFi...]");
+    Serial.println("Connecting to WiFi...");
     WiFi.begin(ssid.c_str(), password.c_str());
 
     int attempts = 0;
@@ -153,81 +142,70 @@ void connectToWiFi() {
     }
 
     if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("\n[WiFi Connected to: " + ssid + "]");
-        Serial.print("[IP Address: ");
-        Serial.print(WiFi.localIP());
-        Serial.println("]");
+        Serial.println("\nWiFi Connected!");
+        Serial.print("IP Address: ");
+        Serial.println(WiFi.localIP());
     } else {
-        Serial.println("\n[Failed to connect to WiFi]");
+        Serial.println("\nFailed to connect to WiFi.");
     }
 }
 
 // Function to connect to MQTT Broker
 void connectToMQTT() {
-    Serial.println("[Connecting to MQTT Broker...]");
+    Serial.println("Connecting to MQTT Broker...");
     while (!client.connected()) {
         String clientID = "ESP32-" + String(random(1000, 9999));
         if (client.connect(clientID.c_str())) {
-            Serial.println("[MQTT Connected to Broker: " + mqtt_broker + "]");
+            Serial.println("Connected to MQTT Broker!");
 
             // Subscribe to receive channel
             client.subscribe(mqtt_receive_channel.c_str());
         } else {
-            Serial.print("[MQTT Connection Failed. Retrying in 5 seconds...]");
+            Serial.print("Failed. Retry in 5 seconds...");
             delay(5000);
         }
+    }
+}
+
+// Function for MQTT reconnection
+void reconnectMQTT() {
+    if (!client.connected()) {
+        Serial.println("Reconnecting to MQTT...");
+        connectToMQTT();
     }
 }
 
 // Function to send data via MQTT
 void sendMQTTMessage(String msg) {
     client.publish(mqtt_send_channel.c_str(), msg.c_str());
-}
-
-// Function for MQTT reconnection
-void reconnectMQTT() {
-    if (!client.connected()) {
-        Serial.println("[Reconnecting to MQTT...]");
-        connectToMQTT();
-    }
-}
-
-// Function to clear configuration from SPIFFS
-void clearConfig() {
-    if (SPIFFS.exists("/config.txt")) {
-        SPIFFS.remove("/config.txt");
-        Serial.println("[Configuration file deleted]");
-    } else {
-        Serial.println("[No configuration file to delete]");
-    }
+    Serial.println("MQTT Message Sent: " + msg);
 }
 
 // Function for handling received MQTT messages
 void callback(char* topic, byte* payload, unsigned int length) {
-    Serial.print("[Message received on: ");
-    Serial.print(topic);
-    Serial.println("]");
+    Serial.print("Message received on topic: ");
+    Serial.println(topic);
 
     // Convert payload to string
     String message = "";
     for (unsigned int i = 0; i < length; i++) {
         message += (char)payload[i];
     }
-    Serial.println("[Received Data: " + message + "]");
+    Serial.println("Content: " + message);
 
     // Process received MQTT message
     if (String(topic) == mqtt_receive_channel) {
         int index = message.toInt();
+        Serial.println(index);
 
         // Check if index is valid (between 0 and 7)
         if (index >= 0 && index < 8) {
             float servoPos = medianValues[index];
             servo1.write(servoPos);
-            Serial.print("[Servo Moved to: ");
-            Serial.print(servoPos);
-            Serial.println("]");
+            Serial.print("Moved the servo to: ");
+            Serial.println(servoPos);
         } else {
-            Serial.println("[Error: Value out of range]");
+            Serial.println("Error: Value out of range");
         }
     }
 }
