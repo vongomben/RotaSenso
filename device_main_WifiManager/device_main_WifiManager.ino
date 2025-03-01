@@ -17,24 +17,30 @@ bool wm_nonblocking = false; // change to true to use non blocking
 
 WiFiManager wm; // global wm instance
 WiFiManagerParameter custom_field; // global param ( for non blocking w params )
+WiFiManagerParameter mqtt_broker_param; // Parameter for MQTT broker selection
+WiFiManagerParameter mqtt_channel_send_param; // Parameter for MQTT send channel
+WiFiManagerParameter mqtt_channel_receive_param; // Parameter for MQTT receive channel
 
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ESP32Servo.h>
 
-// Credenziali WiFi
-const char* ssid = "YourSSID";
-const char* password = "Your-Wifi";
+// MQTT broker options
+const char* mqtt_broker_options[] = {
+  "public-mqtt-broker.bevywise.com",
+  "broker.hivemq.com",
+  "broker.emqx.io",
+  "test.mosquitto.org"
+};
 
-// MQTT broker - we use only one broker to ensure both devices can communicate
-const char* mqtt_server = "public-mqtt-broker.bevywise.com";
+// Default broker (will be updated based on user selection)
+char* mqtt_server = (char*)mqtt_broker_options[0];
 
-// Alternative brokers for manual configuration if needed
-// const char* alt_brokers[] = {
-//   "broker.hivemq.com",
-//   "broker.emqx.io",
-//   "test.mosquitto.org"
-// };
+// Default MQTT channels
+char mqtt_channel_send[30] = "test/SV02";       // Channel to publish messages to
+char mqtt_channel_receive[30] = "test/SV01";    // Channel to receive messages from
+char mqtt_channel_ack_send[30] = "test/SV02_ACK";   // Channel to send ACKs to
+char mqtt_channel_ack_receive[30] = "test/SV01_ACK"; // Channel to receive ACKs from
 
 // Connection tracking
 unsigned long lastConnectionAttempt = 0;
@@ -82,7 +88,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Contenut: " + message);
 
   // Check if this is an ACK message
-  if (String(topic) == "test/SV01_ACK") {
+  if (String(topic) == mqtt_channel_ack_receive) {
     if (waitingForAck && message == lastMessageSent) {
       Serial.println("ACK received for message: " + message);
       waitingForAck = false;
@@ -91,9 +97,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
-  // If the message arrives at '/SV01', check the value received and send ACK
-  // IMPORTANT: CHANGE '/SV01' to '/SV02' for the other device
-  if (String(topic) == "test/SV01") {
+  // If the message arrives at our receive channel, check the value and send ACK
+  if (String(topic) == mqtt_channel_receive) {
     int index = message.toInt();  // convert message to number
     Serial.println(index);
     // Checks that the index is valid (between 0 and 7)
@@ -104,14 +109,64 @@ void callback(char* topic, byte* payload, unsigned int length) {
       Serial.println(servoPos);
 
       // Send acknowledgment
-      // IMPORTANT: CHANGE 'SV01_ACK' to 'SV02_ACK' for the other device
-      client.publish("test/SV02_ACK", String(index).c_str(), true);
+      client.publish(mqtt_channel_ack_send, String(index).c_str(), true);
       Serial.println("Sent ACK for message: " + String(index));
     } else {
       Serial.println("Error: Value out of range");
     }
   }
 }
+
+String getParam(String name){
+  //read parameter from server, for customhmtl input
+  String value;
+  if(wm.server->hasArg(name)) {
+    value = wm.server->arg(name);
+  }
+  return value;
+}
+
+void saveParamCallback(){
+  Serial.println("[CALLBACK] saveParamCallback fired");
+  
+  // Get MQTT broker selection
+  String broker_selection = getParam("mqtt_broker");
+  if(broker_selection.length() > 0) {
+    int index = broker_selection.toInt();
+    if(index >= 0 && index < 4) {
+      mqtt_server = mqtt_broker_options[index];
+      Serial.println("Selected MQTT broker: " + String(mqtt_server));
+    }
+  }
+
+// Function for MQTT reconnection
+void reconnect() {
+  // Only attempt reconnection if enough time has passed since last attempt
+  if (!client.connected() && (millis() - lastConnectionAttempt > reconnectInterval)) {
+    lastConnectionAttempt = millis();
+    Serial.print("Attempting MQTT connection to broker: ");
+    Serial.print(mqtt_server);
+    Serial.print("...");
+
+    String clientID = "ESP32-" + String(random(1000, 9999));  // random client id
+
+    if (client.connect(clientID.c_str())) {
+      Serial.println("Connected to MQTT broker!");
+
+      // Subscribe to topics
+      client.subscribe(mqtt_channel_receive);      // subscribe to receive channel
+      client.subscribe(mqtt_channel_send);         // subscribe to send channel (for monitoring)
+      client.subscribe(mqtt_channel_ack_receive);  // subscribe to receive ACK channel
+      client.subscribe(mqtt_channel_ack_send);     // subscribe to send ACK channel (for monitoring)
+    } else {
+      Serial.print("Failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" Will try again in 5 seconds");
+    }
+  }
+}
+
+
 
 void setup() {
   Serial.begin(115200);
@@ -127,7 +182,7 @@ void setup() {
 
   //wm.resetSettings(); // wipe settings
 
-  if(wm_nonblocking) wm.setConfigPortalBlocking(false)
+  if(wm_nonblocking) wm.setConfigPortalBlocking(false);
 
 // add a custom input field
   int customFieldLength = 40;
@@ -138,10 +193,27 @@ void setup() {
   // test custom html input type(checkbox)
   // new (&custom_field) WiFiManagerParameter("customfieldid", "Custom Field Label", "Custom Field Value", customFieldLength,"placeholder=\"Custom Field Placeholder\" type=\"checkbox\""); // custom html type
   
-  // test custom html(radio)
+  // Create MQTT broker selection radio buttons
+  String mqtt_radio_str = "<br/><label for='mqtt_broker'><b>Select MQTT Broker:</b></label>";
+  for (int i = 0; i < 4; i++) {
+    mqtt_radio_str += "<br><input type='radio' name='mqtt_broker' value='" + String(i) + "'";
+    if (i == 0) mqtt_radio_str += " checked";
+    mqtt_radio_str += "> " + String(mqtt_broker_options[i]);
+  }
+  
+  new (&mqtt_broker_param) WiFiManagerParameter(mqtt_radio_str.c_str()); // custom html input for broker selection
+  
+  // Create MQTT channel input fields
+  new (&mqtt_channel_send_param) WiFiManagerParameter("mqtt_send", "<br/><b>MQTT Channel to Send Messages:</b>", mqtt_channel_send, 30);
+  new (&mqtt_channel_receive_param) WiFiManagerParameter("mqtt_receive", "<br/><b>MQTT Channel to Receive Messages:</b>", mqtt_channel_receive, 30);
+  
+  // Legacy custom field (can be removed if not needed)
   const char* custom_radio_str = "<br/><label for='customfieldid'>Custom Field Label</label><input type='radio' name='customfieldid' value='1' checked> One<br><input type='radio' name='customfieldid' value='2'> Two<br><input type='radio' name='customfieldid' value='3'> Three";
   new (&custom_field) WiFiManagerParameter(custom_radio_str); // custom html input
   
+  wm.addParameter(&mqtt_broker_param);
+  wm.addParameter(&mqtt_channel_send_param);
+  wm.addParameter(&mqtt_channel_receive_param);
   wm.addParameter(&custom_field);
   wm.setSaveParamsCallback(saveParamCallback);
 
@@ -187,18 +259,8 @@ void setup() {
   else {
     //if you get here you have connected to the WiFi    
     Serial.println("connected...yeey :)");
-  }
-
-
-  //  WiFi connection
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
-
-  // Set up MQTT server and callback for receiving messages
+  
+    // Set up MQTT server and callback for receiving messages
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
@@ -241,17 +303,30 @@ void checkButton(){
 }
 
 
-String getParam(String name){
-  //read parameter from server, for customhmtl input
-  String value;
-  if(wm.server->hasArg(name)) {
-    value = wm.server->arg(name);
-  }
-  return value;
-}
 
-void saveParamCallback(){
-  Serial.println("[CALLBACK] saveParamCallback fired");
+
+
+  
+  // Get MQTT channel values
+  String send_channel = getParam("mqtt_send");
+  if(send_channel.length() > 0) {
+    strcpy(mqtt_channel_send, send_channel.c_str());
+    // Update ACK channel based on send channel
+    strcpy(mqtt_channel_ack_send, (send_channel + "_ACK").c_str());
+    Serial.println("MQTT Send Channel: " + send_channel);
+    Serial.println("MQTT Send ACK Channel: " + String(mqtt_channel_ack_send));
+  }
+  
+  String receive_channel = getParam("mqtt_receive");
+  if(receive_channel.length() > 0) {
+    strcpy(mqtt_channel_receive, receive_channel.c_str());
+    // Update ACK channel based on receive channel
+    strcpy(mqtt_channel_ack_receive, (receive_channel + "_ACK").c_str());
+    Serial.println("MQTT Receive Channel: " + receive_channel);
+    Serial.println("MQTT Receive ACK Channel: " + String(mqtt_channel_ack_receive));
+  }
+  
+  // Legacy custom field (can be removed if not needed)
   Serial.println("PARAM customfieldid = " + getParam("customfieldid"));
 }
 
@@ -304,8 +379,7 @@ void loop() {
       }
 
       if (!waitingForAck || messageRetries > 0) {
-        // IMPORTANT: CHANGE '/SV02' to '/SV01' for allowing the two devices to talk to each other
-        client.publish("test/SV02", lastMessageSent.c_str(), true);
+        client.publish(mqtt_channel_send, lastMessageSent.c_str(), true);
         Serial.println("Sent message: " + lastMessageSent);
 
         waitingForAck = true;
@@ -322,8 +396,15 @@ void loop() {
   // Mantieni la connessione WiFi
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi lost! Reconnecting...");
-    WiFi.begin(ssid, password);
+    // Try to reconnect using saved credentials
+    WiFi.begin();
+    
+    // If not connected after 5 seconds, open the config portal
     delay(5000);
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("Failed to reconnect. Starting config portal...");
+      wm.autoConnect("Rotasenso","password");
+    }
   }
 
   // Check and maintain MQTT connection
@@ -335,32 +416,6 @@ void loop() {
   client.loop();
 }
 
-// Function for MQTT reconnection
-void reconnect() {
-  // Only attempt reconnection if enough time has passed since last attempt
-  if (!client.connected() && (millis() - lastConnectionAttempt > reconnectInterval)) {
-    lastConnectionAttempt = millis();
-    Serial.print("Attempting MQTT connection to broker: ");
-    Serial.print(mqtt_server);
-    Serial.print("...");
-
-    String clientID = "ESP32-" + String(random(1000, 9999));  // random client id
-
-    if (client.connect(clientID.c_str())) {
-      Serial.println("Connected to MQTT broker!");
-
-      // Subscribe to topics
-      client.subscribe("test/SV01");      // subscribe to /SV01
-      client.subscribe("test/SV02");      // subscribe to /SV02
-      client.subscribe("test/SV01_ACK");  // subscribe to /SV01_ACK
-      client.subscribe("test/SV02_ACK");  // subscribe to /SV02_ACK
-    } else {
-      Serial.print("Failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" Will try again in 5 seconds");
-    }
-  }
-}
 
 // Function that maps the servo value in 8 intervals from 0 to 7
 int mapTo8Intervals(int value) {
