@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Flash & Config</title>
     <script type="module" src="https://unpkg.com/esp-web-tools@9.1.2/dist/web/install-button.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        #output { 
+            width: 80%; height: 200px; background: black; color: lime; 
+            font-family: monospace; overflow-y: auto; padding: 10px; border-radius: 5px;
+            text-align: left; margin: 20px auto; white-space: pre-wrap;
+        }
+        button, input { margin: 5px; padding: 10px; }
+    </style>
 </head>
 <body>
     <h2>Flash e Configura il tuo ESP32</h2>
-    
+
     <p>Premi il pulsante qui sotto per flashare il firmware sul tuo ESP32:</p>
     <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
 
@@ -22,19 +31,31 @@
     <input type="text" id="receive_channel" placeholder="Canale Ricezione">
     <button id="send">Invia Dati</button>
 
+    <h3>Flusso della seriale</h3>
+    <div id="output">[In attesa di connessione...]</div>
+
     <script>
         let port;
-        
+        let reader;
+        let outputDiv = document.getElementById("output");
+
+        // Connetti alla porta seriale dell'ESP32
         document.getElementById("connect").addEventListener("click", async () => {
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
+                outputDiv.textContent = "[ESP32 Connesso]\n";
                 console.log("Connesso!");
+
+                // Inizia la lettura della seriale
+                readSerial();
             } catch (error) {
                 console.error("Errore di connessione", error);
+                outputDiv.textContent += "[Errore di connessione]\n";
             }
         });
 
+        // Invia i dati di configurazione all'ESP32
         document.getElementById("send").addEventListener("click", async () => {
             if (!port) {
                 alert("Connetti prima il dispositivo!");
@@ -54,8 +75,31 @@
             await writer.write(encoder.encode(message));
             writer.releaseLock();
 
+            outputDiv.textContent += "[Configurazione inviata]\n";
             console.log("Dati inviati:", message);
         });
+
+        // Legge la seriale in tempo reale e aggiorna l'output
+        async function readSerial() {
+            if (!port) return;
+            
+            const decoder = new TextDecoderStream();
+            const inputStream = port.readable.pipeThrough(decoder);
+            reader = inputStream.getReader();
+
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    outputDiv.textContent += value;
+                    outputDiv.scrollTop = outputDiv.scrollHeight; // Scrolla verso il basso
+                }
+            } catch (error) {
+                console.error("Errore lettura seriale", error);
+            } finally {
+                reader.releaseLock();
+            }
+        }
     </script>
 </body>
 </html>
