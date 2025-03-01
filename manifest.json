@@ -1,0 +1,16 @@
+{
+    "name": "ESP32 Flash Tool",
+    "description": "Flash e Configura ESP32",
+    "builds": [
+      {
+        "chipFamily": "ESP32",
+        "parts": [
+          {
+            "path": "firmware/firmware_esp32.bin",
+            "offset": 0
+          }
+        ]
+      }
+    ]
+  }
+  
