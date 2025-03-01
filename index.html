@@ -27,6 +27,16 @@
         #send:hover {
             background-color: darkred;
         }
+        #config-summary {
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 80%;
+            margin: 10px auto;
+            font-family: monospace;
+            cursor: pointer;
+            user-select: all;
+        }
     </style>
 </head>
 <body>
@@ -38,10 +48,15 @@
     <h3>Configure ESP32</h3>
     <button id="connect">Connect to ESP32</button>
     <br><br>
+
+    <!-- Device Name -->
+    <input type="text" id="device_name" placeholder="Device Name (e.g., Mario's RotaSenso)">
+    
+    <!-- WiFi Configuration -->
     <input type="text" id="ssid" placeholder="WiFi SSID">
     <input type="text" id="password" placeholder="WiFi Password">
 
-    <!-- MQTT Broker Dropdown + Custom Option -->
+    <!-- MQTT Broker Selection -->
     <select id="broker">
         <option value="public-mqtt-broker.bevywise.com">Bevywise</option>
         <option value="broker.hivemq.com">HiveMQ</option>
@@ -50,11 +65,16 @@
     </select>
     <input type="text" id="customBroker" placeholder="Enter custom broker" style="display: none;">
 
+    <!-- MQTT Channels -->
     <input type="text" id="send_channel" placeholder="Send Channel">
     <input type="text" id="receive_channel" placeholder="Receive Channel">
-    
-    <!-- Send Configuration button moved below "Receive Channel" -->
+
+    <!-- Send Configuration Button -->
     <button id="send">Send Configuration</button>
+
+    <!-- Configuration Summary (Copyable) -->
+    <h3>Device Summary</h3>
+    <div id="config-summary" onclick="copyToClipboard()">Click to copy configuration</div>
 
     <h3>Serial Output</h3>
     <div id="output">[Waiting for connection...]</div>
@@ -63,6 +83,7 @@
         let port;
         let reader;
         let outputDiv = document.getElementById("output");
+        let configSummary = document.getElementById("config-summary");
 
         // Handle broker selection
         document.getElementById("broker").addEventListener("change", function() {
@@ -97,6 +118,7 @@
                 return;
             }
 
+            let deviceName = document.getElementById("device_name").value || "RotaSenso";
             let ssid = document.getElementById("ssid").value;
             let password = document.getElementById("password").value;
             let broker = document.getElementById("broker").value;
@@ -118,6 +140,9 @@
 
             outputDiv.textContent += "[Configuration Sent]\n";
             console.log("Data Sent:", message);
+
+            // Update the summary text
+            updateSummary(deviceName, receive_channel, send_channel);
         });
 
         // Read ESP32 serial output in real-time
@@ -140,6 +165,21 @@
             } finally {
                 reader.releaseLock();
             }
+        }
+
+        // Update Configuration Summary
+        function updateSummary(deviceName, receiveChannel, sendChannel) {
+            const summaryText = `The RotaSenso of ${deviceName} listens on ${receiveChannel} and publishes on ${sendChannel}`;
+            configSummary.textContent = summaryText;
+        }
+
+        // Copy Configuration Summary to Clipboard
+        function copyToClipboard() {
+            navigator.clipboard.writeText(configSummary.textContent).then(() => {
+                alert("Configuration copied!");
+            }).catch(err => {
+                console.error("Failed to copy", err);
+            });
         }
     </script>
 </body>
