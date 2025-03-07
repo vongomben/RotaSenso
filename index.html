@@ -112,11 +112,24 @@
             padding-top: 20px;
             border-top: 2px dashed #ccc;
         }
+        .browser-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>RotaSenso Configuration</h1>
+        
+        <div class="browser-warning" id="browserWarning">
+            Web Bluetooth may not be supported in your browser. For best results, use Chrome, Edge, or Opera.
+        </div>
         
         <div class="step">
             <h3>Step 1: Connect to Your RotaSenso</h3>
@@ -193,4 +206,292 @@
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
         const DEVICE_NAME_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a7";
         const WIFI_SSID_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-        const WIFI_PASS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26
+        const WIFI_PASS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9";
+        const MQTT_BROKER_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26aa";
+        const MQTT_PUB_CHAN_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ab";
+        const MQTT_SUB_CHAN_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ac";
+        const CONFIG_STATUS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ad";
+        
+        // DOM Elements
+        const connectBtn = document.getElementById('connectBtn');
+        const sendConfigBtn = document.getElementById('sendConfig');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const statusLog = document.getElementById('statusLog');
+        const configSection = document.getElementById('configSection');
+        const summarySection = document.getElementById('summarySection');
+        const brokerSelect = document.getElementById('broker');
+        const customBrokerGroup = document.getElementById('customBrokerGroup');
+        const configSummary = document.getElementById('config-summary');
+        const browserWarning = document.getElementById('browserWarning');
+        
+        // Global variables
+        let bleDevice = null;
+        let bleServer = null;
+        let bleService = null;
+        let characteristicMap = {};
+        
+        // Check if Web Bluetooth is supported
+        if (!navigator.bluetooth) {
+            browserWarning.style.display = 'block';
+            connectBtn.disabled = true;
+            log('Web Bluetooth is not supported in this browser', 'error');
+        }
+        
+        // Utility function to add log messages
+        function log(message, type = 'info') {
+            const logItem = document.createElement('div');
+            logItem.className = `log-item log-${type}`;
+            logItem.textContent = message;
+            statusLog.appendChild(logItem);
+            statusLog.scrollTop = statusLog.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Connect to Bluetooth device
+        connectBtn.addEventListener('click', async () => {
+            try {
+                log('Requesting Bluetooth device...');
+                
+                // Request BLE device with explicit filter on the service UUID
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    // Use filters to show only compatible devices
+                    filters: [
+                        { services: [SERVICE_UUID] }
+                    ],
+                    // Optionally add a name prefix if your devices all share a common prefix
+                    // Uncomment this if you want to see all BLE devices
+                    // acceptAllDevices: true,
+                    // optionalServices: [SERVICE_UUID]
+                });
+                
+                log(`Device selected: ${bleDevice.name}`, 'success');
+                
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                
+                log('Connecting to GATT server...');
+                bleServer = await bleDevice.gatt.connect();
+                
+                log('Getting primary service...');
+                bleService = await bleServer.getPrimaryService(SERVICE_UUID);
+                
+                // Get all characteristics
+                log('Getting characteristics...');
+                const characteristics = await bleService.getCharacteristics();
+                
+                // Map characteristics to their UUIDs for easier access
+                for (const characteristic of characteristics) {
+                    const uuid = characteristic.uuid;
+                    characteristicMap[uuid] = characteristic;
+                    log(`Found characteristic: ${uuid.substring(0, 8)}...`);
+                }
+                
+                // Show configuration section
+                configSection.classList.remove('hidden');
+                connectBtn.disabled = true;
+                
+                // Load current values (if available)
+                await loadCurrentValues();
+                
+            } catch (error) {
+                log(`Connection error: ${error}`, 'error');
+                console.error('Bluetooth connection error:', error);
+            }
+        });
+        
+        // Handle broker selection
+        brokerSelect.addEventListener('change', () => {
+            if (brokerSelect.value === 'custom') {
+                customBrokerGroup.classList.remove('hidden');
+            } else {
+                customBrokerGroup.classList.add('hidden');
+            }
+        });
+        
+        // Load current values from the device
+        async function loadCurrentValues() {
+            try {
+                // Device Name
+                if (characteristicMap[DEVICE_NAME_UUID]) {
+                    const value = await characteristicMap[DEVICE_NAME_UUID].readValue();
+                    const deviceName = new TextDecoder().decode(value);
+                    document.getElementById('deviceName').value = deviceName;
+                }
+                
+                // SSID
+                if (characteristicMap[WIFI_SSID_UUID]) {
+                    const value = await characteristicMap[WIFI_SSID_UUID].readValue();
+                    const ssid = new TextDecoder().decode(value);
+                    document.getElementById('ssid').value = ssid;
+                }
+                
+                // MQTT Broker
+                if (characteristicMap[MQTT_BROKER_UUID]) {
+                    const value = await characteristicMap[MQTT_BROKER_UUID].readValue();
+                    const broker = new TextDecoder().decode(value);
+                    
+                    // Check if it's one of the predefined brokers
+                    const predefinedOptions = Array.from(brokerSelect.options).map(opt => opt.value);
+                    if (predefinedOptions.includes(broker)) {
+                        brokerSelect.value = broker;
+                    } else if (broker) {
+                        brokerSelect.value = 'custom';
+                        customBrokerGroup.classList.remove('hidden');
+                        document.getElementById('customBroker').value = broker;
+                    }
+                }
+                
+                // MQTT Publish Channel
+                if (characteristicMap[MQTT_PUB_CHAN_UUID]) {
+                    const value = await characteristicMap[MQTT_PUB_CHAN_UUID].readValue();
+                    const pubChannel = new TextDecoder().decode(value);
+                    document.getElementById('publishChannel').value = pubChannel;
+                }
+                
+                // MQTT Subscribe Channel
+                if (characteristicMap[MQTT_SUB_CHAN_UUID]) {
+                    const value = await characteristicMap[MQTT_SUB_CHAN_UUID].readValue();
+                    const subChannel = new TextDecoder().decode(value);
+                    document.getElementById('subscribeChannel').value = subChannel;
+                }
+                
+                log('Current values loaded from device', 'success');
+            } catch (error) {
+                log(`Error loading values: ${error}`, 'error');
+            }
+        }
+        
+        // Send configuration to the device
+        sendConfigBtn.addEventListener('click', async () => {
+            try {
+                log('Sending configuration to device...');
+                
+                // Get values from form
+                const deviceName = document.getElementById('deviceName').value;
+                const ssid = document.getElementById('ssid').value;
+                const password = document.getElementById('password').value;
+                let broker = brokerSelect.value;
+                if (broker === 'custom') {
+                    broker = document.getElementById('customBroker').value;
+                }
+                const publishChannel = document.getElementById('publishChannel').value;
+                const subscribeChannel = document.getElementById('subscribeChannel').value;
+                
+                // Validate required fields
+                if (!ssid || !password || !broker || !publishChannel || !subscribeChannel) {
+                    log('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Send values one by one
+                
+                // Device Name
+                if (characteristicMap[DEVICE_NAME_UUID]) {
+                    log('Setting device name...');
+                    await characteristicMap[DEVICE_NAME_UUID].writeValue(
+                        new TextEncoder().encode(deviceName)
+                    );
+                }
+                
+                // SSID
+                if (characteristicMap[WIFI_SSID_UUID]) {
+                    log('Setting WiFi SSID...');
+                    await characteristicMap[WIFI_SSID_UUID].writeValue(
+                        new TextEncoder().encode(ssid)
+                    );
+                }
+                
+                // Password
+                if (characteristicMap[WIFI_PASS_UUID]) {
+                    log('Setting WiFi password...');
+                    await characteristicMap[WIFI_PASS_UUID].writeValue(
+                        new TextEncoder().encode(password)
+                    );
+                }
+                
+                // MQTT Broker
+                if (characteristicMap[MQTT_BROKER_UUID]) {
+                    log('Setting MQTT broker...');
+                    await characteristicMap[MQTT_BROKER_UUID].writeValue(
+                        new TextEncoder().encode(broker)
+                    );
+                }
+                
+                // MQTT Publish Channel
+                if (characteristicMap[MQTT_PUB_CHAN_UUID]) {
+                    log('Setting publish channel...');
+                    await characteristicMap[MQTT_PUB_CHAN_UUID].writeValue(
+                        new TextEncoder().encode(publishChannel)
+                    );
+                }
+                
+                // MQTT Subscribe Channel (sent last to trigger configuration)
+                if (characteristicMap[MQTT_SUB_CHAN_UUID]) {
+                    log('Setting subscribe channel...');
+                    await characteristicMap[MQTT_SUB_CHAN_UUID].writeValue(
+                        new TextEncoder().encode(subscribeChannel)
+                    );
+                }
+                
+                log('Configuration sent successfully!', 'success');
+                
+                // Update summary
+                updateSummary(deviceName, subscribeChannel, publishChannel);
+                
+                // Show summary section
+                configSection.classList.add('hidden');
+                summarySection.classList.remove('hidden');
+                
+            } catch (error) {
+                log(`Error sending configuration: ${error}`, 'error');
+            }
+        });
+        
+        // Update Configuration Summary
+        function updateSummary(deviceName, receiveChannel, sendChannel) {
+            const summaryText = `The RotaSenso of ${deviceName || 'Unknown'} listens on ${receiveChannel} and publishes on ${sendChannel}`;
+            configSummary.textContent = summaryText;
+        }
+        
+        // Copy Configuration Summary to Clipboard
+        function copyToClipboard() {
+            navigator.clipboard.writeText(configSummary.textContent).then(() => {
+                alert("Configuration copied to clipboard!");
+            }).catch(err => {
+                console.error("Failed to copy text: ", err);
+            });
+        }
+        
+        // Handle disconnection
+        disconnectBtn.addEventListener('click', () => {
+            if (bleDevice && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+            } else {
+                resetUI();
+            }
+        });
+        
+        function onDisconnected() {
+            log('Device disconnected', 'info');
+            resetUI();
+        }
+        
+        function resetUI() {
+            connectBtn.disabled = false;
+            configSection.classList.add('hidden');
+            summarySection.classList.add('hidden');
+            bleDevice = null;
+            bleServer = null;
+            bleService = null;
+            characteristicMap = {};
+        }
+        
+        // Initialize with default values
+        document.getElementById('deviceName').value = "My RotaSenso";
+        document.getElementById('publishChannel').value = "rotasenso/out";
+        document.getElementById('subscribeChannel').value = "rotasenso/in";
+        
+        // Global function for copy to clipboard
+        window.copyToClipboard = copyToClipboard;
+    </script>
+</body>
+</html>
