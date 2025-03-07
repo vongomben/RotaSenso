@@ -26,6 +26,9 @@
 const int buttonPin = D6;  // the number of the pushbutton pin
 const int ledPin = D7;    // the number of the LED pin
 
+int brightness = 0;  // how bright the LED is
+int fadeAmount = 5;  // how many points to fade the LED by
+
 // variables will change:
 int buttonState = 0;  // variable for reading the pushbutton status
 
@@ -39,13 +42,24 @@ void setup() {
 void loop() {
   // read the state of the pushbutton value:
   buttonState = digitalRead(buttonPin);
+  analogWrite(ledPin, brightness);
 
-  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+  // change the brightness for next time through the loop:
+  brightness = brightness + fadeAmount;
+
+  // reverse the direction of the fading at the ends of the fade:
+  if (brightness <= 0 || brightness >= 255) {
+    fadeAmount = -fadeAmount;
+  }
+  // wait for 30 milliseconds to see the dimming effect
+  delay(30);
+
+ /* // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
   if (buttonState == HIGH) {
     // turn LED on:
     digitalWrite(ledPin, HIGH);
   } else {
     // turn LED off:
     digitalWrite(ledPin, LOW);
-  }
+  }*/
 }
