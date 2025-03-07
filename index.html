@@ -1,497 +1,668 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RotaSenso Configuration</title>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            margin: 20px;
-            background-color: #f5f5f5;
-            color: #333; 
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #d32f2f;
-        }
-        h2 {
-            color: #333;
-            margin-top: 20px;
-        }
-        .status {
-            background: #f0f0f0;
-            border-radius: 5px;
-            padding: 10px;
-            margin: 20px 0;
-            text-align: left;
-            font-family: monospace;
-            min-height: 100px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .log-item {
-            margin: 5px 0;
-            padding: 5px;
-        }
-        .log-info { color: #2196F3; }
-        .log-success { color: #4CAF50; }
-        .log-error { color: #F44336; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RotaSenso Configuration</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin: 20px;
+            background-color: #f5f5f5;
+            color: #333; 
+        }
+        .logo-container {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px auto;
+        }
+        .logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            margin-top: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 20px;
+        }
+        .status {
+            background: #f0f0f0;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-item {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .log-info { color: #2196F3; }
+        .log-success { color: #4CAF50; }
+        .log-error { color: #F44336; }
+        
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #b71c1c;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .hidden {
+            display: none;
+        }
+        #config-summary {
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            border-radius: 5px;
+            text-align: left;
+            cursor: pointer;
+            user-select: all;
+        }
+        .step {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .step:last-child {
+            border-bottom: none;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #d32f2f;
+        }
+        .flash-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #ccc;
+        }
+        .browser-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        .connection-status {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+        }
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background-color: #ccc;
+        }
+        .status-connected {
+            background-color: #4CAF50;
+        }
+        .status-disconnected {
+            background-color: #F44336;
+        }
+        .status-pending {
+            background-color: #FFC107;
+        }
+        .countdown {
+            font-weight: bold;
+            color: #2196F3;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="RotaSenso.svg" alt="RotaSenso Logo" class="logo">
+        </div>
+        
+        <h1>RotaSenso Configuration</h1>
+        
+        <div class="browser-warning" id="browserWarning">
+            Web Bluetooth may not be supported in your browser. For best results, use Chrome, Edge, or Opera.
+        </div>
+        
+        <div class="step">
+            <h3>Step 1: Connect to Your RotaSenso</h3>
+            <p>Click the button below to connect to your device via Bluetooth:</p>
+            <button id="connectBtn">Connect via Bluetooth</button>
+            <div class="status" id="statusLog">
+                <div class="log-item log-info">Waiting for connection...</div>
+            </div>
+        </div>
+        
+        <div class="connection-status" id="connectionStatusPanel">
+            <div class="status-item">
+                <div class="status-indicator" id="wifiStatus"></div>
+                <span>WiFi</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="mqttStatus"></div>
+                <span>MQTT</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="bleStatus"></div>
+                <span>Bluetooth</span>
+            </div>
+        </div>
+        
+        <div id="configSection" class="hidden step">
+            <h3>Step 2: Configure Your RotaSenso</h3>
+            
+            <div class="form-group">
+                <label for="deviceName">Device Name:</label>
+                <input type="text" id="deviceName" placeholder="e.g., Mario's RotaSenso">
+            </div>
+            
+            <div class="form-group">
+                <label for="ssid">WiFi SSID:</label>
+                <input type="text" id="ssid" placeholder="Your WiFi network name">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">WiFi Password:</label>
+                <input type="password" id="password" placeholder="Your WiFi password">
+            </div>
+            
+            <div class="form-group">
+                <label for="broker">MQTT Broker:</label>
+                <select id="broker">
+                    <option value="public-mqtt-broker.bevywise.com">Bevywise</option>
+                    <option value="broker.hivemq.com" selected>HiveMQ</option>
+                    <option value="broker.emqx.io">EMQX</option>
+                    <option value="custom">Custom...</option>
+                </select>
+            </div>
+            
+            <div class="form-group hidden" id="customBrokerGroup">
+                <label for="customBroker">Custom Broker:</label>
+                <input type="text" id="customBroker" placeholder="e.g., mqtt.example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="publishChannel">Send Channel:</label>
+                <input type="text" id="publishChannel" placeholder="e.g., myhouse/rotasenso/outgoing">
+            </div>
+            
+            <div class="form-group">
+                <label for="subscribeChannel">Receive Channel:</label>
+                <input type="text" id="subscribeChannel" placeholder="e.g., myhouse/rotasenso/incoming">
+            </div>
+            
+            <button id="sendConfig">Send Configuration</button>
+        </div>
+        
+        <div id="summarySection" class="hidden step">
+            <h3>Step 3: Configuration Complete</h3>
+            <p>Your device has been successfully configured! Here's a summary:</p>
+            <div id="config-summary" onclick="copyToClipboard()">Click to copy configuration</div>
+            <div class="countdown" id="countdownTimer"></div>
+            <button id="disconnectBtn">Disconnect</button>
+        </div>
+        
+        <div class="flash-section">
+            <h2>Need to Flash Your Device?</h2>
+            <p>If you need to flash the firmware to your ESP32 first, use ESP Web Tools.</p>
+            <p><a href="https://esphome.github.io/esp-web-tools/" target="_blank">Learn more about ESP Web Tools</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Service and Characteristic UUIDs
+        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const DEVICE_NAME_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a7";
+        const WIFI_SSID_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+        const WIFI_PASS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9";
+        const MQTT_BROKER_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26aa";
+        const MQTT_PUB_CHAN_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ab";
+        const MQTT_SUB_CHAN_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ac";
+        const CONFIG_STATUS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ad";
+        
+        // Debug level - higher values show more information
+        const DEBUG_LEVEL = 3; // 0=none, 1=errors, 2=warnings, 3=info, 4=verbose
         
-        .form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin: 10px 0;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #b71c1c;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .hidden {
-            display: none;
-        }
-        #config-summary {
-            background: #f4f4f4;
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin: 20px 0;
-            font-family: monospace;
-            border-radius: 5px;
-            text-align: left;
-            cursor: pointer;
-            user-select: all;
-        }
-        .step {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
-        }
-        .step:last-child {
-            border-bottom: none;
-        }
-        .step h3 {
-            margin-top: 0;
-            color: #d32f2f;
-        }
-        .flash-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px dashed #ccc;
-        }
-        .browser-warning {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>RotaSenso Configuration</h1>
-        
-        <div class="browser-warning" id="browserWarning">
-            Web Bluetooth may not be supported in your browser. For best results, use Chrome, Edge, or Opera.
-        </div>
-        
-        <div class="step">
-            <h3>Step 1: Connect to Your RotaSenso</h3>
-            <p>Click the button below to connect to your device via Bluetooth:</p>
-            <button id="connectBtn">Connect via Bluetooth</button>
-            <div class="status" id="statusLog">
-                <div class="log-item log-info">Waiting for connection...</div>
-            </div>
-        </div>
-        
-        <div id="configSection" class="hidden step">
-            <h3>Step 2: Configure Your RotaSenso</h3>
-            
-            <div class="form-group">
-                <label for="deviceName">Device Name:</label>
-                <input type="text" id="deviceName" placeholder="e.g., Mario's RotaSenso">
-            </div>
-            
-            <div class="form-group">
-                <label for="ssid">WiFi SSID:</label>
-                <input type="text" id="ssid" placeholder="Your WiFi network name">
-            </div>
-            
-            <div class="form-group">
-                <label for="password">WiFi Password:</label>
-                <input type="password" id="password" placeholder="Your WiFi password">
-            </div>
-            
-            <div class="form-group">
-                <label for="broker">MQTT Broker:</label>
-                <select id="broker">
-                    <option value="public-mqtt-broker.bevywise.com">Bevywise</option>
-                    <option value="broker.hivemq.com" selected>HiveMQ</option>
-                    <option value="broker.emqx.io">EMQX</option>
-                    <option value="custom">Custom...</option>
-                </select>
-            </div>
-            
-            <div class="form-group hidden" id="customBrokerGroup">
-                <label for="customBroker">Custom Broker:</label>
-                <input type="text" id="customBroker" placeholder="e.g., mqtt.example.com">
-            </div>
-            
-            <div class="form-group">
-                <label for="publishChannel">Send Channel:</label>
-                <input type="text" id="publishChannel" placeholder="e.g., myhouse/rotasenso/outgoing">
-            </div>
-            
-            <div class="form-group">
-                <label for="subscribeChannel">Receive Channel:</label>
-                <input type="text" id="subscribeChannel" placeholder="e.g., myhouse/rotasenso/incoming">
-            </div>
-            
-            <button id="sendConfig">Send Configuration</button>
-        </div>
-        
-        <div id="summarySection" class="hidden step">
-            <h3>Step 3: Configuration Complete</h3>
-            <p>Your device has been successfully configured! Here's a summary:</p>
-            <div id="config-summary" onclick="copyToClipboard()">Click to copy configuration</div>
-            <button id="disconnectBtn">Disconnect</button>
-        </div>
-        
-        <div class="flash-section">
-            <h2>Need to Flash Your Device?</h2>
-            <p>If you need to flash the firmware to your ESP32 first, use the button below:</p>
-            <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
-            <script type="module" src="https://unpkg.com/esp-web-tools@9.1.2/dist/web/install-button.js"></script>
-        </div>
-    </div>
-
-    <script>
-        // Service and Characteristic UUIDs
-        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-        const DEVICE_NAME_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a7";
-        const WIFI_SSID_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
-        const WIFI_PASS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9";
-        const MQTT_BROKER_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26aa";
-        const MQTT_PUB_CHAN_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ab";
-        const MQTT_SUB_CHAN_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ac";
-        const CONFIG_STATUS_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26ad";
-        
-        // DOM Elements
-        const connectBtn = document.getElementById('connectBtn');
-        const sendConfigBtn = document.getElementById('sendConfig');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        const statusLog = document.getElementById('statusLog');
-        const configSection = document.getElementById('configSection');
-        const summarySection = document.getElementById('summarySection');
-        const brokerSelect = document.getElementById('broker');
-        const customBrokerGroup = document.getElementById('customBrokerGroup');
-        const configSummary = document.getElementById('config-summary');
-        const browserWarning = document.getElementById('browserWarning');
-        
-        // Global variables
-        let bleDevice = null;
-        let bleServer = null;
-        let bleService = null;
-        let characteristicMap = {};
-        
-        // Check if Web Bluetooth is supported
-        if (!navigator.bluetooth) {
-            browserWarning.style.display = 'block';
-            connectBtn.disabled = true;
-            log('Web Bluetooth is not supported in this browser', 'error');
-        }
-        
-        // Utility function to add log messages
-        function log(message, type = 'info') {
-            const logItem = document.createElement('div');
-            logItem.className = `log-item log-${type}`;
-            logItem.textContent = message;
-            statusLog.appendChild(logItem);
-            statusLog.scrollTop = statusLog.scrollHeight;
-            console.log(`[${type.toUpperCase()}] ${message}`);
-        }
-        
-        // Connect to Bluetooth device
-        connectBtn.addEventListener('click', async () => {
-            try {
-                log('Requesting Bluetooth device...');
-                
-                // Request BLE device with explicit filter on the service UUID
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    // Use filters to show only compatible devices
-                    filters: [
-                        { services: [SERVICE_UUID] }
-                    ],
-                    // Optionally add a name prefix if your devices all share a common prefix
-                    // Uncomment this if you want to see all BLE devices
-                    // acceptAllDevices: true,
-                    // optionalServices: [SERVICE_UUID]
-                });
-                
-                log(`Device selected: ${bleDevice.name}`, 'success');
-                
-                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                
-                log('Connecting to GATT server...');
-                bleServer = await bleDevice.gatt.connect();
-                
-                log('Getting primary service...');
-                bleService = await bleServer.getPrimaryService(SERVICE_UUID);
-                
-                // Get all characteristics
-                log('Getting characteristics...');
-                const characteristics = await bleService.getCharacteristics();
-                
-                // Map characteristics to their UUIDs for easier access
-                for (const characteristic of characteristics) {
-                    const uuid = characteristic.uuid;
-                    characteristicMap[uuid] = characteristic;
-                    log(`Found characteristic: ${uuid.substring(0, 8)}...`);
-                }
-                
-                // Show configuration section
-                configSection.classList.remove('hidden');
-                connectBtn.disabled = true;
-                
-                // Load current values (if available)
-                await loadCurrentValues();
-                
-            } catch (error) {
-                log(`Connection error: ${error}`, 'error');
-                console.error('Bluetooth connection error:', error);
-            }
-        });
-        
-        // Handle broker selection
-        brokerSelect.addEventListener('change', () => {
-            if (brokerSelect.value === 'custom') {
-                customBrokerGroup.classList.remove('hidden');
-            } else {
-                customBrokerGroup.classList.add('hidden');
-            }
-        });
-        
-        // Load current values from the device
-        async function loadCurrentValues() {
-            try {
-                // Device Name
-                if (characteristicMap[DEVICE_NAME_UUID]) {
-                    const value = await characteristicMap[DEVICE_NAME_UUID].readValue();
-                    const deviceName = new TextDecoder().decode(value);
-                    document.getElementById('deviceName').value = deviceName;
-                }
-                
-                // SSID
-                if (characteristicMap[WIFI_SSID_UUID]) {
-                    const value = await characteristicMap[WIFI_SSID_UUID].readValue();
-                    const ssid = new TextDecoder().decode(value);
-                    document.getElementById('ssid').value = ssid;
-                }
-                
-                // MQTT Broker
-                if (characteristicMap[MQTT_BROKER_UUID]) {
-                    const value = await characteristicMap[MQTT_BROKER_UUID].readValue();
-                    const broker = new TextDecoder().decode(value);
-                    
-                    // Check if it's one of the predefined brokers
-                    const predefinedOptions = Array.from(brokerSelect.options).map(opt => opt.value);
-                    if (predefinedOptions.includes(broker)) {
-                        brokerSelect.value = broker;
-                    } else if (broker) {
-                        brokerSelect.value = 'custom';
-                        customBrokerGroup.classList.remove('hidden');
-                        document.getElementById('customBroker').value = broker;
-                    }
-                }
-                
-                // MQTT Publish Channel
-                if (characteristicMap[MQTT_PUB_CHAN_UUID]) {
-                    const value = await characteristicMap[MQTT_PUB_CHAN_UUID].readValue();
-                    const pubChannel = new TextDecoder().decode(value);
-                    document.getElementById('publishChannel').value = pubChannel;
-                }
-                
-                // MQTT Subscribe Channel
-                if (characteristicMap[MQTT_SUB_CHAN_UUID]) {
-                    const value = await characteristicMap[MQTT_SUB_CHAN_UUID].readValue();
-                    const subChannel = new TextDecoder().decode(value);
-                    document.getElementById('subscribeChannel').value = subChannel;
-                }
-                
-                log('Current values loaded from device', 'success');
-            } catch (error) {
-                log(`Error loading values: ${error}`, 'error');
-            }
-        }
-        
-        // Send configuration to the device
-        sendConfigBtn.addEventListener('click', async () => {
-            try {
-                log('Sending configuration to device...');
-                
-                // Get values from form
-                const deviceName = document.getElementById('deviceName').value;
-                const ssid = document.getElementById('ssid').value;
-                const password = document.getElementById('password').value;
-                let broker = brokerSelect.value;
-                if (broker === 'custom') {
-                    broker = document.getElementById('customBroker').value;
-                }
-                const publishChannel = document.getElementById('publishChannel').value;
-                const subscribeChannel = document.getElementById('subscribeChannel').value;
-                
-                // Validate required fields
-                if (!ssid || !password || !broker || !publishChannel || !subscribeChannel) {
-                    log('Please fill in all required fields', 'error');
-                    return;
-                }
-                
-                // Send values one by one
-                
-                // Device Name
-                if (characteristicMap[DEVICE_NAME_UUID]) {
-                    log('Setting device name...');
-                    await characteristicMap[DEVICE_NAME_UUID].writeValue(
-                        new TextEncoder().encode(deviceName)
-                    );
-                }
-                
-                // SSID
-                if (characteristicMap[WIFI_SSID_UUID]) {
-                    log('Setting WiFi SSID...');
-                    await characteristicMap[WIFI_SSID_UUID].writeValue(
-                        new TextEncoder().encode(ssid)
-                    );
-                }
-                
-                // Password
-                if (characteristicMap[WIFI_PASS_UUID]) {
-                    log('Setting WiFi password...');
-                    await characteristicMap[WIFI_PASS_UUID].writeValue(
-                        new TextEncoder().encode(password)
-                    );
-                }
-                
-                // MQTT Broker
-                if (characteristicMap[MQTT_BROKER_UUID]) {
-                    log('Setting MQTT broker...');
-                    await characteristicMap[MQTT_BROKER_UUID].writeValue(
-                        new TextEncoder().encode(broker)
-                    );
-                }
-                
-                // MQTT Publish Channel
-                if (characteristicMap[MQTT_PUB_CHAN_UUID]) {
-                    log('Setting publish channel...');
-                    await characteristicMap[MQTT_PUB_CHAN_UUID].writeValue(
-                        new TextEncoder().encode(publishChannel)
-                    );
-                }
-                
-                // MQTT Subscribe Channel (sent last to trigger configuration)
-                if (characteristicMap[MQTT_SUB_CHAN_UUID]) {
-                    log('Setting subscribe channel...');
-                    await characteristicMap[MQTT_SUB_CHAN_UUID].writeValue(
-                        new TextEncoder().encode(subscribeChannel)
-                    );
-                }
-                
-                log('Configuration sent successfully!', 'success');
-                
-                // Update summary
-                updateSummary(deviceName, subscribeChannel, publishChannel);
-                
-                // Show summary section
-                configSection.classList.add('hidden');
-                summarySection.classList.remove('hidden');
-                
-            } catch (error) {
-                log(`Error sending configuration: ${error}`, 'error');
-            }
-        });
-        
-        // Update Configuration Summary
-        function updateSummary(deviceName, receiveChannel, sendChannel) {
-            const summaryText = `The RotaSenso of ${deviceName || 'Unknown'} listens on ${receiveChannel} and publishes on ${sendChannel}`;
-            configSummary.textContent = summaryText;
-        }
-        
-        // Copy Configuration Summary to Clipboard
-        function copyToClipboard() {
-            navigator.clipboard.writeText(configSummary.textContent).then(() => {
-                alert("Configuration copied to clipboard!");
-            }).catch(err => {
-                console.error("Failed to copy text: ", err);
-            });
-        }
-        
-        // Handle disconnection
-        disconnectBtn.addEventListener('click', () => {
-            if (bleDevice && bleDevice.gatt.connected) {
-                bleDevice.gatt.disconnect();
-            } else {
-                resetUI();
-            }
-        });
-        
-        function onDisconnected() {
-            log('Device disconnected', 'info');
-            resetUI();
-        }
-        
-        function resetUI() {
-            connectBtn.disabled = false;
-            configSection.classList.add('hidden');
-            summarySection.classList.add('hidden');
-            bleDevice = null;
-            bleServer = null;
-            bleService = null;
-            characteristicMap = {};
-        }
-        
-        // Initialize with default values
-        document.getElementById('deviceName').value = "My RotaSenso";
-        document.getElementById('publishChannel').value = "rotasenso/out";
-        document.getElementById('subscribeChannel').value = "rotasenso/in";
-        
-        // Global function for copy to clipboard
-        window.copyToClipboard = copyToClipboard;
-    </script>
-</body>
+        // DOM Elements
+        const connectBtn = document.getElementById('connectBtn');
+        const sendConfigBtn = document.getElementById('sendConfig');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const statusLog = document.getElementById('statusLog');
+        const configSection = document.getElementById('configSection');
+        const summarySection = document.getElementById('summarySection');
+        const brokerSelect = document.getElementById('broker');
+        const customBrokerGroup = document.getElementById('customBrokerGroup');
+        const configSummary = document.getElementById('config-summary');
+        const browserWarning = document.getElementById('browserWarning');
+        const countdownTimer = document.getElementById('countdownTimer');
+        
+        // Status indicators
+        const wifiStatus = document.getElementById('wifiStatus');
+        const mqttStatus = document.getElementById('mqttStatus');
+        const bleStatus = document.getElementById('bleStatus');
+        const connectionStatusPanel = document.getElementById('connectionStatusPanel');
+        
+        // Hide connection status panel initially
+        connectionStatusPanel.classList.add('hidden');
+        
+        // Initialize status indicators
+        wifiStatus.className = 'status-indicator';
+        mqttStatus.className = 'status-indicator';
+        bleStatus.className = 'status-indicator';
+        
+        // Global variables
+        let bleDevice = null;
+        let bleServer = null;
+        let bleService = null;
+        let characteristicMap = {};
+        let countdownInterval = null;
+        
+        // Check if Web Bluetooth is supported
+        if (!navigator.bluetooth) {
+            browserWarning.style.display = 'block';
+            connectBtn.disabled = true;
+            log('Web Bluetooth is not supported in this browser', 'error');
+        }
+        
+        // Utility function to add log messages
+        function log(message, type = 'info') {
+            const logItem = document.createElement('div');
+            logItem.className = `log-item log-${type}`;
+            logItem.textContent = message;
+            statusLog.appendChild(logItem);
+            statusLog.scrollTop = statusLog.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            
+            // If success or error message, also log to console with styling
+            if (type === 'success') {
+                console.log('%c ' + message, 'background: #4CAF50; color: white; padding: 5px;');
+            } else if (type === 'error') {
+                console.log('%c ' + message, 'background: #F44336; color: white; padding: 5px;');
+            }
+        }
+        
+        // Connect to Bluetooth device
+        connectBtn.addEventListener('click', async () => {
+            try {
+                log('Requesting Bluetooth device...');
+                
+                // Request BLE device with explicit filter on the service UUID
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    // Use filters to show only compatible devices
+                    filters: [
+                        { services: [SERVICE_UUID] }
+                    ],
+                    // Optionally add a name prefix if your devices all share a common prefix
+                    // Uncomment this if you want to see all BLE devices
+                    // acceptAllDevices: true,
+                    // optionalServices: [SERVICE_UUID]
+                });
+                
+                log(`Device selected: ${bleDevice.name}`, 'success');
+                
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                
+                log('Connecting to GATT server...');
+                bleServer = await bleDevice.gatt.connect();
+                
+                // Update BLE status
+                connectionStatusPanel.classList.remove('hidden');
+                bleStatus.classList.add('status-connected');
+                
+                log('Getting primary service...');
+                bleService = await bleServer.getPrimaryService(SERVICE_UUID);
+                
+                // Get all characteristics
+                log('Getting characteristics...');
+                const characteristics = await bleService.getCharacteristics();
+                
+                // Map characteristics to their UUIDs for easier access
+                for (const characteristic of characteristics) {
+                    const uuid = characteristic.uuid;
+                    characteristicMap[uuid] = characteristic;
+                    log(`Found characteristic: ${uuid.substring(0, 8)}...`);
+                }
+                
+                // Subscribe to configuration status notifications
+                if (characteristicMap[CONFIG_STATUS_UUID]) {
+                    const statusChar = characteristicMap[CONFIG_STATUS_UUID];
+                    log('Subscribing to status notifications...', 'info');
+                    
+                    // Add event listener for notifications
+                    statusChar.addEventListener('characteristicvaluechanged', (event) => {
+                        const value = event.target.value;
+                        const statusMessage = new TextDecoder().decode(value);
+                        
+                        // Detailed logging based on message content
+                        if (statusMessage.includes("WiFi: Connected")) {
+                            log('WiFi Connection: ✅ CONNECTED', 'success');
+                            wifiStatus.classList.add('status-connected');
+                            console.log('%c WiFi Connected Successfully', 'background: #4CAF50; color: white; padding: 5px;');
+                        } else if (statusMessage.includes("MQTT: Connected")) {
+                            log('MQTT Connection: ✅ CONNECTED', 'success');
+                            mqttStatus.classList.add('status-connected');
+                            console.log('%c MQTT Broker Connected Successfully', 'background: #4CAF50; color: white; padding: 5px;');
+                        } else if (statusMessage.includes("WiFi") && statusMessage.includes("failed")) {
+                            log('WiFi Connection: ❌ FAILED', 'error');
+                            wifiStatus.classList.add('status-disconnected');
+                            console.error('WiFi connection failed');
+                        } else if (statusMessage.includes("MQTT") && statusMessage.includes("failed")) {
+                            log('MQTT Connection: ❌ FAILED', 'error');
+                            mqttStatus.classList.add('status-disconnected');
+                            console.error('MQTT connection failed');
+                        } else {
+                            log('Status update: ' + statusMessage, 'info');
+                        }
+                    });
+                    
+                    // Start notifications
+                    await statusChar.startNotifications();
+                }
+                
+                // Show configuration section
+                configSection.classList.remove('hidden');
+                
+                // Load current values
+                await loadCurrentValues();
+                
+            } catch (error) {
+                log(`Connection error: ${error}`, 'error');
+                console.error('Bluetooth connection error:', error);
+                bleStatus.classList.add('status-disconnected');
+            }
+        });
+        
+        // Handle broker selection
+        brokerSelect.addEventListener('change', () => {
+            if (brokerSelect.value === 'custom') {
+                customBrokerGroup.classList.remove('hidden');
+            } else {
+                customBrokerGroup.classList.add('hidden');
+            }
+        });
+        
+        // Load current values from the device
+        async function loadCurrentValues() {
+            try {
+                // Device Name
+                if (characteristicMap[DEVICE_NAME_UUID]) {
+                    const value = await characteristicMap[DEVICE_NAME_UUID].readValue();
+                    const deviceName = new TextDecoder().decode(value);
+                    document.getElementById('deviceName').value = deviceName;
+                }
+                
+                // SSID
+                if (characteristicMap[WIFI_SSID_UUID]) {
+                    const value = await characteristicMap[WIFI_SSID_UUID].readValue();
+                    const ssid = new TextDecoder().decode(value);
+                    document.getElementById('ssid').value = ssid;
+                }
+                
+                // MQTT Broker
+                if (characteristicMap[MQTT_BROKER_UUID]) {
+                    const value = await characteristicMap[MQTT_BROKER_UUID].readValue();
+                    const broker = new TextDecoder().decode(value);
+                    
+                    // Check if it's one of the predefined brokers
+                    const predefinedOptions = Array.from(brokerSelect.options).map(opt => opt.value);
+                    if (predefinedOptions.includes(broker)) {
+                        brokerSelect.value = broker;
+                    } else if (broker) {
+                        brokerSelect.value = 'custom';
+                        customBrokerGroup.classList.remove('hidden');
+                        document.getElementById('customBroker').value = broker;
+                    }
+                }
+                
+                // MQTT Publish Channel
+                if (characteristicMap[MQTT_PUB_CHAN_UUID]) {
+                    const value = await characteristicMap[MQTT_PUB_CHAN_UUID].readValue();
+                    const pubChannel = new TextDecoder().decode(value);
+                    document.getElementById('publishChannel').value = pubChannel;
+                }
+                
+                // MQTT Subscribe Channel
+                if (characteristicMap[MQTT_SUB_CHAN_UUID]) {
+                    const value = await characteristicMap[MQTT_SUB_CHAN_UUID].readValue();
+                    const subChannel = new TextDecoder().decode(value);
+                    document.getElementById('subscribeChannel').value = subChannel;
+                }
+                
+                log('Current values loaded from device', 'success');
+            } catch (error) {
+                log(`Error loading values: ${error}`, 'error');
+            }
+        }
+        
+        // Send configuration to the device
+        sendConfigBtn.addEventListener('click', async () => {
+            try {
+                log('Sending configuration to device...');
+                
+                // Update status indicators to pending
+                wifiStatus.className = 'status-indicator status-pending';
+                mqttStatus.className = 'status-indicator status-pending';
+                
+                // Get values from form
+                const deviceName = document.getElementById('deviceName').value;
+                const ssid = document.getElementById('ssid').value;
+                const password = document.getElementById('password').value;
+                let broker = brokerSelect.value;
+                if (broker === 'custom') {
+                    broker = document.getElementById('customBroker').value;
+                }
+                const publishChannel = document.getElementById('publishChannel').value;
+                const subscribeChannel = document.getElementById('subscribeChannel').value;
+                
+                // Validate required fields
+                if (!ssid || !password || !broker || !publishChannel || !subscribeChannel) {
+                    log('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Send values one by one
+                
+                // Device Name
+                if (characteristicMap[DEVICE_NAME_UUID]) {
+                    log('Setting device name...');
+                    await characteristicMap[DEVICE_NAME_UUID].writeValue(
+                        new TextEncoder().encode(deviceName)
+                    );
+                }
+                
+                // SSID
+                if (characteristicMap[WIFI_SSID_UUID]) {
+                    log('Setting WiFi SSID...');
+                    await characteristicMap[WIFI_SSID_UUID].writeValue(
+                        new TextEncoder().encode(ssid)
+                    );
+                }
+                
+                // Password
+                if (characteristicMap[WIFI_PASS_UUID]) {
+                    log('Setting WiFi password...');
+                    await characteristicMap[WIFI_PASS_UUID].writeValue(
+                        new TextEncoder().encode(password)
+                    );
+                }
+                
+                // MQTT Broker
+                if (characteristicMap[MQTT_BROKER_UUID]) {
+                    log('Setting MQTT broker...');
+                    await characteristicMap[MQTT_BROKER_UUID].writeValue(
+                        new TextEncoder().encode(broker)
+                    );
+                }
+                
+                // MQTT Publish Channel
+                if (characteristicMap[MQTT_PUB_CHAN_UUID]) {
+                    log('Setting publish channel...');
+                    await characteristicMap[MQTT_PUB_CHAN_UUID].writeValue(
+                        new TextEncoder().encode(publishChannel)
+                    );
+                }
+                
+                // MQTT Subscribe Channel (sent last to trigger configuration)
+                if (characteristicMap[MQTT_SUB_CHAN_UUID]) {
+                    log('Setting subscribe channel...');
+                    await characteristicMap[MQTT_SUB_CHAN_UUID].writeValue(
+                        new TextEncoder().encode(subscribeChannel)
+                    );
+                }
+                
+                log('Configuration sent successfully!', 'success');
+                
+                // Update summary
+                updateSummary(deviceName, subscribeChannel, publishChannel);
+                
+                // Show summary section
+                configSection.classList.add('hidden');
+                summarySection.classList.remove('hidden');
+                
+            } catch (error) {
+                log(`Error sending configuration: ${error}`, 'error');
+            }
+        });
+        
+        // Update Configuration Summary
+        function updateSummary(deviceName, receiveChannel, sendChannel) {
+            const summaryText = `The RotaSenso of ${deviceName || 'Unknown'} listens on ${receiveChannel} and publishes on ${sendChannel}`;
+            configSummary.textContent = summaryText;
+            
+            // Start countdown
+            let countdown = 20; // 20 seconds
+            countdownTimer.textContent = `Waiting ${countdown}s for device to connect...`;
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            countdownInterval = setInterval(() => {
+                countdown--;
+                countdownTimer.textContent = `Waiting ${countdown}s for device to connect...`;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownTimer.textContent = 'Connection status monitoring complete';
+                    
+                    // If no status update received, show a message
+                    if (!wifiStatus.classList.contains('status-connected') && 
+                        !wifiStatus.classList.contains('status-disconnected')) {
+                        log('No WiFi status received from device. Connection may have failed.', 'error');
+                    }
+                    
+                    if (!mqttStatus.classList.contains('status-connected') && 
+                        !mqttStatus.classList.contains('status-disconnected')) {
+                        log('No MQTT status received from device. Connection may have failed.', 'error');
+                    }
+                }
+            }, 1000);
+            
+            // Keep the connection open for a while to receive status updates
+            log('Waiting for connection status updates...', 'info');
+            setTimeout(() => {
+                log('You can now disconnect. Configuration saved.', 'success');
+            }, 20000); // Wait 20 seconds for connection feedback
+        }
+        
+        // Copy Configuration Summary to Clipboard
+        function copyToClipboard() {
+            navigator.clipboard.writeText(configSummary.textContent).then(() => {
+                alert("Configuration copied to clipboard!");
+            }).catch(err => {
+                console.error("Failed to copy text: ", err);
+            });
+        }
+        
+        // Handle disconnection
+        disconnectBtn.addEventListener('click', () => {
+            if (bleDevice && bleDevice.gatt.connected) {
+                bleDevice.gatt.disconnect();
+            } else {
+                resetUI();
+            }
+        });
+        
+        function onDisconnected() {
+            log('Device disconnected', 'info');
+            bleStatus.classList.remove('status-connected');
+            bleStatus.classList.add('status-disconnected');
+            resetUI();
+        }
+        
+        function resetUI() {
+            connectBtn.disabled = false;
+            configSection.classList.add('hidden');
+            summarySection.classList.add('hidden');
+            bleDevice = null;
+            bleServer = null;
+            bleService = null;
+            characteristicMap = {};
+        }
+        
+        // Initialize with default values
+        document.getElementById('deviceName').value = "My RotaSenso";
+        document.getElementById('publishChannel').value = "rotasenso/out";
+        document.getElementById('subscribeChannel').value = "rotasenso/in";
+        
+        // Global function for copy to clipboard
+        window.copyToClipboard = copyToClipboard;
+    </script>
+</body>
 </html>
