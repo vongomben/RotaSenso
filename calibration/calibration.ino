@@ -2,6 +2,7 @@
 
 // 2025 Gomba San Valentine's Special RotaSenso project
 // Calibrating the sheet: pot movement to servo movements
+// updated for v2 of Rotasenso
 
 static const int servoPin = 1;           // servo pin
 static const int potentiometerPin = A5;  // pot pin
@@ -17,6 +18,11 @@ int lastMappedValue = -1;           // Stores the last recorded value
 int stableCount = 0;                //Count how many cycles the value is stable
 const int stabilityThreshold = 10;  // Number of stable readings before printing
 
+// Servo 8 middle positions
+//float medianValues[] = { 11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75 };
+float medianValues[] = { 11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 250 };
+
+
 void setup() {
   Serial.begin(115200);
   servo1.attach(servoPin);  // Connetti il servo al pin 1
@@ -24,11 +30,17 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   // initialize the pushbutton pin as an input:
   pinMode(buttonPin, INPUT);
+
+  for (int i = 0; i < 300; i++) {
+    servo1.write(i);
+    delay(10);
+  }
 }
 
 void loop() {
-  int servoPosition = map(analogRead(potentiometerPin), 0, 4096, 0, 180);
-  servo1.write(servoPosition);
+  int servoPosition = map(analogRead(potentiometerPin), 0, 4095, 0, 180);
+  // Serial.prinln(servoPosition);
+
 
   // read the state of the pushbutton value:
   buttonState = digitalRead(buttonPin);
@@ -47,21 +59,26 @@ void loop() {
 
   // Print only if value is stable for X cycles
   if (stableCount == stabilityThreshold) {
-    Serial.print("Servo Position: ");
+    Serial.print("Pot Position: ");
+    Serial.print(analogRead(potentiometerPin));
+    Serial.print(" Servo Position: ");
     Serial.print(servoPosition);
     Serial.print(" -> Mapped Value: ");
-    Serial.println(mappedValue);
+    Serial.println(medianValues[mappedValue]);
+    servo1.write(medianValues[mappedValue]);
   }
 
 
   // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
   if (buttonState == HIGH) {
     // turn LED on:
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(ledPin, LOW);
   } else {
     // turn LED off:
-    digitalWrite(ledPin, LOW);
+    digitalWrite(ledPin, HIGH);
   }
+
+  // servo1.write(servoPosition);
 
   delay(20);
 }
