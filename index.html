@@ -113,6 +113,49 @@
             border-top: 1px solid #eee;
             padding-top: 10px;
         }
+        .troubleshooting {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff8e1;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            text-align: left;
+        }
+        .troubleshooting h3 {
+            margin-top: 0;
+            color: #f57c00;
+        }
+        .error-image {
+            max-width: 100%;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .boot-sequence {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+        }
+        .sequence-step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .sequence-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 30px;
+            text-align: center;
+        }
+        .sequence-text {
+            flex-grow: 1;
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -129,7 +172,7 @@
         </div>
         
         <div class="instructions">
-            <h3>Instructions</h3>
+            <h3>Installation Instructions</h3>
             <ol>
                 <li>Connect your ESP32 to your computer via USB</li>
                 <li>Click the "Install RotaSenso Firmware" button below</li>
@@ -137,6 +180,31 @@
                 <li>Wait for the installation to complete</li>
                 <li>Your RotaSenso will automatically restart with the new firmware</li>
             </ol>
+        </div>
+        
+        <div class="boot-sequence">
+            <h3>ESP32 Boot Mode Sequence</h3>
+            <p>If you receive an initialization error, follow these steps to put your ESP32 in bootloader mode:</p>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">1️⃣</div>
+                <div class="sequence-text">Press and hold the <strong>BOOT</strong> button (or GPIO0 button)</div>
+            </div>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">2️⃣</div>
+                <div class="sequence-text">While holding BOOT, press and release the <strong>RESET</strong> button</div>
+            </div>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">3️⃣</div>
+                <div class="sequence-text">Continue holding BOOT for another second</div>
+            </div>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">4️⃣</div>
+                <div class="sequence-text">Release BOOT and click "Install" immediately</div>
+            </div>
         </div>
         
         <div class="flash-section">
@@ -150,6 +218,18 @@
             </div>
             
             <p>Note: This feature requires Chrome, Edge, or other Chromium-based browsers.</p>
+        </div>
+        
+        <div class="troubleshooting">
+            <h3>Troubleshooting</h3>
+            <p><strong>If you see "Failed to initialize" error:</strong></p>
+            <ul>
+                <li>Make sure you're using a data USB cable (some cables are power-only)</li>
+                <li>Try the boot sequence described above</li>
+                <li>Try a different USB port on your computer</li>
+                <li>Install the <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank">CP210x USB to UART Bridge VCP Drivers</a> if you haven't already</li>
+                <li>On Windows, check Device Manager to ensure the COM port appears when the device is plugged in</li>
+            </ul>
         </div>
         
         <div class="footnote">
