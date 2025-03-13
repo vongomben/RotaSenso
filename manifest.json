@@ -5,8 +5,8 @@
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "rotasenso-firmware.bin", "offset": 0 }
+        { "path": "https://github.com/vongomben/RotaSenso/blob/gh-pages/rotasenso-firmware.bin", "offset": 0 }
       ]
-    } 
+    }
   ]
 }
