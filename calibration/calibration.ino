@@ -4,7 +4,7 @@
 // Calibrating the sheet: pot movement to servo movements
 // updated for v2 of Rotasenso
 
-static const int servoPin = 1;           // servo pin
+static const int servoPin =  D1;           // servo pin
 static const int potentiometerPin = A5;  // pot pin
 
 const int buttonPin = D6;  // the number of the pushbutton pin
@@ -19,8 +19,7 @@ int stableCount = 0;                //Count how many cycles the value is stable
 const int stabilityThreshold = 10;  // Number of stable readings before printing
 
 // Servo 8 middle positions
-//float medianValues[] = { 11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75 };
-float medianValues[] = { 11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 250 };
+float medianValues[] = { 11.25, 33.75, 56.25, 78.75, 101.25, 123.75, 146.25, 168.75 };
 
 
 void setup() {
@@ -38,7 +37,7 @@ void setup() {
 }
 
 void loop() {
-  int servoPosition = map(analogRead(potentiometerPin), 0, 4095, 0, 180);
+  int servoPosition = map(analogRead(potentiometerPin), 0, 4095, 180, 0);
   // Serial.prinln(servoPosition);
 
 
@@ -60,7 +59,7 @@ void loop() {
   // Print only if value is stable for X cycles
   if (stableCount == stabilityThreshold) {
     Serial.print("Pot Position: ");
-    Serial.print(analogRead(potentiometerPin));
+    Serial.print(mappedValue);
     Serial.print(" Servo Position: ");
     Serial.print(servoPosition);
     Serial.print(" -> Mapped Value: ");
@@ -85,5 +84,8 @@ void loop() {
 
 // Function that maps the servo value in 8 intervals from 0 to 7
 int mapTo8Intervals(int value) {
-  return value / (180 / 8);  // 180° divided by 8 intervals
+ // return value / (180 / 8);  // 180° divided by 8 intervals
+
+  // Map from 0-180 to 0-7
+  return constrain(map(value, 0, 181, 0, 8), 0, 7);
 }
