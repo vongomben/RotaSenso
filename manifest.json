@@ -1,0 +1,12 @@
+{
+  "name": "RotaSenso Firmware",
+  "version": "1.0",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "https://github.com/vongomben/RotaSenso/blob/main/RotaSenso_3/build/esp32.esp32.XIAO_ESP32S3/RotaSenso_3.ino.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
