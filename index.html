@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<script type="module" src="https://unpkg.com/esp-web-tools@9.1.1/dist/web/install-button.js?module"></script>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RotaSenso Configuration</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin: 20px;
+            background-color: #f5f5f5;
+            color: #333; 
+        }
+        .logo-container {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px auto;
+        }
+        .logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            margin-top: 10px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 20px;
+        }
+        .status {
+            background: #f0f0f0;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .flash-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        .browser-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        .flash-button {
+            margin: 20px 0;
+        }
+        .instructions {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        .instructions ol {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        .instructions code {
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #b71c1c;
+        }
+        .footnote {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .troubleshooting {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff8e1;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            text-align: left;
+        }
+        .troubleshooting h3 {
+            margin-top: 0;
+            color: #f57c00;
+        }
+        .error-image {
+            max-width: 100%;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .boot-sequence {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+        }
+        .sequence-step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            width: 100%;
+        }
+        .sequence-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 30px;
+            text-align: center;
+        }
+        .sequence-text {
+            flex-grow: 1;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="RotaSenso.svg" alt="RotaSenso Logo" class="logo">
+        </div>
+        
+        <h1>RotaSenso Firmware Installation</h1>
+        
+        <div class="browser-warning" id="browserWarning">
+            Web Serial may not be supported in your browser. For best results, use Chrome, Edge, or Opera.
+        </div>
+        
+        <div class="instructions">
+            <h3>Installation Instructions</h3>
+            <ol>
+                <li>Connect your ESP32 to your computer via USB</li>
+                <li>Click the "Install RotaSenso Firmware" button below</li>
+                <li>Select the correct COM port when prompted</li>
+                <li>Wait for the installation to complete</li>
+                <li>Your RotaSenso will automatically restart with the new firmware</li>
+            </ol>
+        </div>
+        
+        <div class="boot-sequence">
+            <h3>ESP32 Boot Mode Sequence</h3>
+            <p>If you receive an initialization error, follow these steps to put your ESP32 in bootloader mode:</p>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">1️⃣</div>
+                <div class="sequence-text">Press and hold the <strong>BOOT</strong> button (or GPIO0 button)</div>
+            </div>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">2️⃣</div>
+                <div class="sequence-text">While holding BOOT, press and release the <strong>RESET</strong> button</div>
+            </div>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">3️⃣</div>
+                <div class="sequence-text">Continue holding BOOT for another second</div>
+            </div>
+            
+            <div class="sequence-step">
+                <div class="sequence-icon">4️⃣</div>
+                <div class="sequence-text">Release BOOT and click "Install" immediately</div>
+            </div>
+        </div>
+        
+        <div class="flash-section">
+            <h2>Flash Your Device</h2>
+            <p>Connect your ESP32 via USB and click the button below to install the RotaSenso firmware:</p>
+            
+            <div class="flash-button">
+                <esp-web-install-button manifest="./manifest.json">
+                    <button slot="activate">Install RotaSenso Firmware</button>
+                </esp-web-install-button>
+            </div>
+            
+            <p>Note: This feature requires Chrome, Edge, or other Chromium-based browsers.</p>
+        </div>
+        
+        <div class="troubleshooting">
+            <h3>Troubleshooting</h3>
+            <p><strong>If you see "Failed to initialize" error:</strong></p>
+            <ul>
+                <li>Make sure you're using a data USB cable (some cables are power-only)</li>
+                <li>Try the boot sequence described above</li>
+                <li>Try a different USB port on your computer</li>
+                <li>Install the <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank">CP210x USB to UART Bridge VCP Drivers</a> if you haven't already</li>
+                <li>On Windows, check Device Manager to ensure the COM port appears when the device is plugged in</li>
+            </ul>
+        </div>
+        
+        <div class="footnote">
+            <p>RotaSenso © 2025 - Firmware Version 3.0</p>
+            <p>Built with ESP Web Tools and love ❤️</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if Web Serial is supported
+        if (!navigator.serial) {
+            document.getElementById('browserWarning').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
