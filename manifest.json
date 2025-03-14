@@ -3,7 +3,7 @@
   "version": "2025.03.0",
   "builds": [
     {
-      "chipFamily": "ESP32",
+      "chipFamily": "ESP32-S3",
       "parts": [
         { "path": "https://github.com/vongomben/RotaSenso/blob/gh-pages/rotasenso-firmware.bin", "offset": 0 }
       ]
