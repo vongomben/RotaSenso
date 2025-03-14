@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<script type="module" src="./esp-web-tools-main/dist/web/install-button.js?module"></script>
 <html lang="en">
 
 <head>
@@ -156,6 +156,23 @@
             flex-grow: 1;
             text-align: left;
         }
+        .config-form {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 
@@ -174,11 +191,12 @@
         <div class="instructions">
             <h3>Installation Instructions</h3>
             <ol>
+                <li>Enter your WiFi and MQTT broker details below</li>
                 <li>Connect your ESP32 to your computer via USB</li>
-                <li>Click the "Install RotaSenso Firmware" button below</li>
+                <li>Click the "Install RotaSenso Firmware" button</li>
                 <li>Select the correct COM port when prompted</li>
                 <li>Wait for the installation to complete</li>
-                <li>Your RotaSenso will automatically restart with the new firmware</li>
+                <li>Your RotaSenso will automatically restart with the new firmware and connect to your network</li>
             </ol>
         </div>
         
@@ -208,11 +226,45 @@
         </div>
         
         <div class="flash-section">
-            <h2>Flash Your Device</h2>
-            <p>Connect your ESP32 via USB and click the button below to install the RotaSenso firmware:</p>
+            <h2>Configure and Flash Your Device</h2>
+            <p>Enter your WiFi and MQTT broker details, then connect your ESP32 via USB:</p>
+            
+            <div class="config-form">
+                <h3>WiFi Configuration</h3>
+                <div class="form-group">
+                    <label for="wifi-ssid">WiFi SSID:</label>
+                    <input type="text" id="wifi-ssid" placeholder="Your WiFi name">
+                </div>
+                <div class="form-group">
+                    <label for="wifi-password">WiFi Password:</label>
+                    <input type="password" id="wifi-password" placeholder="WiFi password">
+                </div>
+
+                <h3>MQTT Configuration</h3>
+                <div class="form-group">
+                    <label for="mqtt-broker">MQTT Broker:</label>
+                    <input type="text" id="mqtt-broker" placeholder="broker.example.com">
+                </div>
+                <div class="form-group">
+                    <label for="mqtt-port">MQTT Port:</label>
+                    <input type="number" id="mqtt-port" value="1883">
+                </div>
+                <div class="form-group">
+                    <label for="mqtt-user">MQTT Username:</label>
+                    <input type="text" id="mqtt-user" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label for="mqtt-password">MQTT Password:</label>
+                    <input type="password" id="mqtt-password" placeholder="Optional">
+                </div>
+                <div class="form-group">
+                    <label for="mqtt-topic">MQTT Base Topic:</label>
+                    <input type="text" id="mqtt-topic" value="rotasenso/">
+                </div>
+            </div>
             
             <div class="flash-button">
-                <esp-web-install-button manifest="./manifest.json">
+                <esp-web-install-button id="install-button" manifest="./manifest.json">
                     <button slot="activate">Install RotaSenso Firmware</button>
                 </esp-web-install-button>
             </div>
@@ -243,6 +295,52 @@
         if (!navigator.serial) {
             document.getElementById('browserWarning').style.display = 'block';
         }
+        
+        // Handle form submission and update manifest config
+        document.addEventListener('DOMContentLoaded', function() {
+            const installButton = document.getElementById('install-button');
+            
+            if (installButton) {
+                installButton.addEventListener('start-install', function() {
+                    // Get form values
+                    const wifiSSID = document.getElementById('wifi-ssid').value;
+                    const wifiPassword = document.getElementById('wifi-password').value;
+                    const mqttBroker = document.getElementById('mqtt-broker').value;
+                    const mqttPort = document.getElementById('mqtt-port').value;
+                    const mqttUser = document.getElementById('mqtt-user').value;
+                    const mqttPassword = document.getElementById('mqtt-password').value;
+                    const mqttTopic = document.getElementById('mqtt-topic').value;
+                    
+                    // Create config object
+                    const config = {
+                        ssid: wifiSSID,
+                        password: wifiPassword,
+                        mqtt_broker: mqttBroker,
+                        mqtt_port: parseInt(mqttPort) || 1883,
+                        mqtt_user: mqttUser,
+                        mqtt_password: mqttPassword,
+                        mqtt_topic: mqttTopic
+                    };
+                    
+                    // Update manifest with config
+                    fetch('./manifest.json')
+                        .then(response => response.json())
+                        .then(manifest => {
+                            manifest.config_data = config;
+                            
+                            // Create a temporary manifest file
+                            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            
+                            // Update install button manifest attribute
+                            installButton.setAttribute('manifest', url);
+                        })
+                        .catch(error => {
+                            console.error('Error updating manifest:', error);
+                        });
+                });
+            }
+        });
     </script>
 </body>
 </html>

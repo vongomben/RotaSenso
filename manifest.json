@@ -1,12 +1,22 @@
 {
   "name": "RotaSenso Firmware",
   "version": "2025.03.0",
+  "new_install_prompt_erase": true,
   "builds": [
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "https://github.com/vongomben/RotaSenso/blob/gh-pages/rotasenso-firmware.bin", "offset": 0 }
+        { "path": "./rotasenso-firmware.bin", "offset": 0 }
       ]
     }
-  ]
+  ],
+  "config_data": {
+    "ssid": "",
+    "password": "",
+    "mqtt_broker": "",
+    "mqtt_port": 1883,
+    "mqtt_user": "",
+    "mqtt_password": "",
+    "mqtt_topic": "rotasenso/"
+  }
 }
