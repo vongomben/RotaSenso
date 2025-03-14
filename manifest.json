@@ -17,6 +17,7 @@
     "mqtt_port": 1883,
     "mqtt_user": "",
     "mqtt_password": "",
-    "mqtt_topic": "rotasenso/"
+    "mqtt_topic": "rotasenso/",
+    "inbound_channel": ""
   }
 }

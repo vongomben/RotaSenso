@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<script type="module" src="./esp-web-tools-main/dist/web/install-button.js?module"></script>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RotaSenso Configuration</title>
+    <!-- Import ESP Web Tools first -->
+    <script type="module" src="./esp-web-tools-main/dist/web/install-button.js?module"></script>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -173,6 +174,12 @@
             border-radius: 4px;
             border: 1px solid #ccc;
         }
+        /* Custom ESP Web Tools styles */
+        esp-web-install-button {
+            --esp-tools-button-color: #d32f2f;
+            --esp-tools-button-text-color: white;
+            --esp-tools-button-border-radius: 5px;
+        }
     </style>
 </head>
 
@@ -229,7 +236,7 @@
             <h2>Configure and Flash Your Device</h2>
             <p>Enter your WiFi and MQTT broker details, then connect your ESP32 via USB:</p>
             
-            <div class="config-form">
+            <div class="config-form" id="config-form">
                 <h3>WiFi Configuration</h3>
                 <div class="form-group">
                     <label for="wifi-ssid">WiFi SSID:</label>
@@ -261,10 +268,24 @@
                     <label for="mqtt-topic">MQTT Base Topic:</label>
                     <input type="text" id="mqtt-topic" value="rotasenso/">
                 </div>
+                <div class="form-group">
+                    <label for="mqtt-broker-select">MQTT Broker Select:</label>
+                    <select id="mqtt-broker-select">
+                        <option value="">Custom (enter details above)</option>
+                        <option value="broker1">Free Broker 1</option>
+                        <option value="broker2">Free Broker 2</option>
+                        <option value="broker3">Free Broker 3</option>
+                        <option value="broker4">Free Broker 4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inbound-channel">Inbound Channel:</label>
+                    <input type="text" id="inbound-channel" placeholder="Enter inbound channel">
+                </div>
             </div>
             
             <div class="flash-button">
-                <esp-web-install-button id="install-button" manifest="./manifest.json">
+                <esp-web-install-button id="install-button">
                     <button slot="activate">Install RotaSenso Firmware</button>
                 </esp-web-install-button>
             </div>
@@ -299,46 +320,103 @@
         // Handle form submission and update manifest config
         document.addEventListener('DOMContentLoaded', function() {
             const installButton = document.getElementById('install-button');
+            const brokerSelect = document.getElementById('mqtt-broker-select');
             
+            // Broker selection handler
+            brokerSelect.addEventListener('change', function() {
+                const brokerValue = brokerSelect.value;
+                if (brokerValue) {
+                    // Pre-fill values based on selection
+                    switch(brokerValue) {
+                        case 'broker1':
+                            document.getElementById('mqtt-broker').value = 'broker.emqx.io';
+                            document.getElementById('mqtt-port').value = '1883';
+                            document.getElementById('mqtt-user').value = '';
+                            document.getElementById('mqtt-password').value = '';
+                            break;
+                        case 'broker2':
+                            document.getElementById('mqtt-broker').value = 'broker.hivemq.com';
+                            document.getElementById('mqtt-port').value = '1883';
+                            document.getElementById('mqtt-user').value = '';
+                            document.getElementById('mqtt-password').value = '';
+                            break;
+                        case 'broker3':
+                            document.getElementById('mqtt-broker').value = 'test.mosquitto.org';
+                            document.getElementById('mqtt-port').value = '1883';
+                            document.getElementById('mqtt-user').value = '';
+                            document.getElementById('mqtt-password').value = '';
+                            break;
+                        case 'broker4':
+                            document.getElementById('mqtt-broker').value = 'mqtt.eclipseprojects.io';
+                            document.getElementById('mqtt-port').value = '1883';
+                            document.getElementById('mqtt-user').value = '';
+                            document.getElementById('mqtt-password').value = '';
+                            break;
+                    }
+                }
+            });
+            
+            // Create a dynamic manifest URL with the configuration
+            function updateManifestWithConfig() {
+                // Get form values
+                const wifiSSID = document.getElementById('wifi-ssid').value;
+                const wifiPassword = document.getElementById('wifi-password').value;
+                const mqttBroker = document.getElementById('mqtt-broker').value;
+                const mqttPort = document.getElementById('mqtt-port').value;
+                const mqttUser = document.getElementById('mqtt-user').value;
+                const mqttPassword = document.getElementById('mqtt-password').value;
+                const mqttTopic = document.getElementById('mqtt-topic').value;
+                const inboundChannel = document.getElementById('inbound-channel').value;
+                
+                // Create config object
+                const config = {
+                    ssid: wifiSSID,
+                    password: wifiPassword,
+                    mqtt_broker: mqttBroker,
+                    mqtt_port: parseInt(mqttPort) || 1883,
+                    mqtt_user: mqttUser,
+                    mqtt_password: mqttPassword,
+                    mqtt_topic: mqttTopic,
+                    inbound_channel: inboundChannel
+                };
+                
+                // Fetch the original manifest
+                fetch('./manifest.json')
+                    .then(response => response.json())
+                    .then(manifest => {
+                        // Add config data to manifest
+                        manifest.config_data = config;
+                        
+                        // Create a blob URL with the manifest data
+                        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Update the manifest URL
+                        installButton.setAttribute('manifest', url);
+                        
+                        // Manually trigger click on the button
+                        const activateButton = installButton.querySelector('button[slot="activate"]');
+                        if (activateButton) {
+                            activateButton.click();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error updating manifest:', error);
+                        alert('Error updating configuration. Please try again.');
+                    });
+            }
+            
+            // Add click event listener to the install button
             if (installButton) {
-                installButton.addEventListener('start-install', function() {
-                    // Get form values
-                    const wifiSSID = document.getElementById('wifi-ssid').value;
-                    const wifiPassword = document.getElementById('wifi-password').value;
-                    const mqttBroker = document.getElementById('mqtt-broker').value;
-                    const mqttPort = document.getElementById('mqtt-port').value;
-                    const mqttUser = document.getElementById('mqtt-user').value;
-                    const mqttPassword = document.getElementById('mqtt-password').value;
-                    const mqttTopic = document.getElementById('mqtt-topic').value;
-                    
-                    // Create config object
-                    const config = {
-                        ssid: wifiSSID,
-                        password: wifiPassword,
-                        mqtt_broker: mqttBroker,
-                        mqtt_port: parseInt(mqttPort) || 1883,
-                        mqtt_user: mqttUser,
-                        mqtt_password: mqttPassword,
-                        mqtt_topic: mqttTopic
-                    };
-                    
-                    // Update manifest with config
-                    fetch('./manifest.json')
-                        .then(response => response.json())
-                        .then(manifest => {
-                            manifest.config_data = config;
-                            
-                            // Create a temporary manifest file
-                            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-                            const url = URL.createObjectURL(blob);
-                            
-                            // Update install button manifest attribute
-                            installButton.setAttribute('manifest', url);
-                        })
-                        .catch(error => {
-                            console.error('Error updating manifest:', error);
-                        });
-                });
+                const activateBtn = installButton.querySelector('button[slot="activate"]');
+                if (activateBtn) {
+                    activateBtn.addEventListener('click', function(event) {
+                        // Prevent default behavior
+                        event.preventDefault();
+                        // Update manifest with config before installation
+                        updateManifestWithConfig();
+                    });
+                }
             }
         });
     </script>
